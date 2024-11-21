@@ -1,4 +1,7 @@
+// import { contextMiddleware } from './middleware/contextMiddleware';
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
+import { contextMiddleware } from './middleware/contextMiddleware';
+import { Request, Response } from 'express';
 
 const {
   DynamoDBDocumentClient,
@@ -16,30 +19,16 @@ const client = new DynamoDBClient();
 const docClient = DynamoDBDocumentClient.from(client);
 
 app.use(express.json());
+app.use(contextMiddleware);
 
-app.get('/users/:userId', async (req, res) => {
-  const params = {
-    TableName: USERS_TABLE,
-    Key: {
-      userId: req.params.userId,
-    },
-  };
-
-  try {
-    const command = new GetCommand(params);
-    const { Item } = await docClient.send(command);
-    if (Item) {
-      const { userId, name } = Item;
-      res.json({ userId, name });
-    } else {
-      res
-        .status(404)
-        .json({ error: 'Could not find user with provided "userId"' });
-    }
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: 'Could not retrieve user' });
+app.get('/users/:userId', async (req: Request, res: Response) => {
+  const { userRepository } = req.context;
+  const { userId } = req.params;
+  const user = await userRepository.get(userId);
+  if (!user) {
+    return res.status(404).json({ error: 'User not found' });
   }
+  res.json(user);
 });
 
 app.post('/users', async (req, res) => {
