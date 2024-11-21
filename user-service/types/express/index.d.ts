@@ -1,8 +1,9 @@
-import { UserRepository } from '../../repositories';
+import { User, UserRepository } from '../../repositories';
 
 // Define the context object that will be available in the Express request object
 interface AppContext {
   userRepository: UserRepository;
+  fetchedUser?: User;
 }
 
 declare global {

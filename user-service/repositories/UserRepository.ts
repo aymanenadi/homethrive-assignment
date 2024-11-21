@@ -5,6 +5,7 @@ import {
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 import { z } from 'zod';
 import { UserAlreadyExistsError } from '../errors/UserAlreadyExistsError';
+import { UserNotFoundError } from '../errors/UserNotFoundError';
 
 const USERS_TABLE = process.env.USERS_TABLE;
 const client = new DynamoDBClient();
@@ -63,15 +64,22 @@ export class UserRepository {
   }
 
   async update(id: string, user: Partial<User>) {
-    await this.docClient.put({
-      TableName: USERS_TABLE,
-      Item: {
-        ...user,
-        id,
-      },
-      // Only update if the user already exists
-      ConditionExpression: 'attribute_exists(id)',
-    });
+    try {
+      await this.docClient.put({
+        TableName: USERS_TABLE,
+        Item: {
+          ...user,
+          id,
+        },
+        // Only update if the user already exists
+        ConditionExpression: 'attribute_exists(id)',
+      });
+    } catch (error) {
+      if (error instanceof ConditionalCheckFailedException) {
+        throw new UserNotFoundError();
+      }
+      throw error;
+    }
   }
 
   async delete(id: string) {
