@@ -33,7 +33,12 @@ functions:
   api:
     handler: handler.handler
     events:
-      - httpApi: "*"
+      - http:
+          path: users
+          method: ANY
+      - http:
+          path: users/{proxy+}
+          method: ANY
 
 resources:
   Resources:

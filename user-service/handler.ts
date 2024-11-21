@@ -13,6 +13,7 @@ const express = require('express');
 const serverless = require('serverless-http');
 
 const app = express();
+const router = express.Router();
 
 const USERS_TABLE = process.env.USERS_TABLE;
 const client = new DynamoDBClient();
@@ -21,7 +22,7 @@ const docClient = DynamoDBDocumentClient.from(client);
 app.use(express.json());
 app.use(contextMiddleware);
 
-app.get('/users/:userId', async (req: Request, res: Response) => {
+router.get('/:userId', async (req: Request, res: Response) => {
   const { userRepository } = req.context;
   const { userId } = req.params;
   const user = await userRepository.get(userId);
@@ -31,7 +32,7 @@ app.get('/users/:userId', async (req: Request, res: Response) => {
   res.json(user);
 });
 
-app.post('/users', async (req, res) => {
+router.post('/', async (req, res) => {
   const { userId, name } = req.body;
   if (typeof userId !== 'string') {
     res.status(400).json({ error: '"userId" must be a string' });
@@ -54,10 +55,12 @@ app.post('/users', async (req, res) => {
   }
 });
 
-app.use((req, res, next) => {
+router.use((req, res, next) => {
   return res.status(404).json({
     error: 'Not Found',
   });
 });
+
+app.use('/users', router);
 
 exports.handler = serverless(app);
