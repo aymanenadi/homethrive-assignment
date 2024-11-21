@@ -1,0 +1,14 @@
+{
+  "name": "homethrive-assignment",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/aymanenadi/homethrive-assignment.git",
+  "author": "aymanenadi <aymane.nadi@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "serverless": "serverless"
+  },
+  "devDependencies": {
+    "serverless": "^4.4.11"
+  }
+}
