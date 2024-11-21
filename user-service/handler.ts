@@ -1,63 +1,68 @@
-// import { contextMiddleware } from './middleware/contextMiddleware';
-const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
-import { contextMiddleware } from './middleware/contextMiddleware';
 import { Request, Response } from 'express';
+import serverless from 'serverless-http';
+import { v4 as uuid } from 'uuid';
 
-const {
-  DynamoDBDocumentClient,
-  GetCommand,
-  PutCommand,
-} = require('@aws-sdk/lib-dynamodb');
+import { contextMiddleware } from './middleware/contextMiddleware';
+import { UserSchema } from './repositories';
 
 const express = require('express');
-const serverless = require('serverless-http');
 
 const app = express();
 const router = express.Router();
 
-const USERS_TABLE = process.env.USERS_TABLE;
-const client = new DynamoDBClient();
-const docClient = DynamoDBDocumentClient.from(client);
-
 app.use(express.json());
 app.use(contextMiddleware);
 
-router.get('/:userId', async (req: Request, res: Response) => {
+const getUser = async (req: Request, res: Response) => {
   const { userRepository } = req.context;
-  const { userId } = req.params;
-  const user = await userRepository.get(userId);
+  const { id } = req.params;
+  const user = await userRepository.get(id);
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
   }
   res.json(user);
-});
+};
 
-router.post('/', async (req, res) => {
-  const { userId, name } = req.body;
-  if (typeof userId !== 'string') {
-    res.status(400).json({ error: '"userId" must be a string' });
-  } else if (typeof name !== 'string') {
-    res.status(400).json({ error: '"name" must be a string' });
+const createUser = async (req: Request, res: Response) => {
+  const body = req.body;
+  // Generate an ID if not provided
+  if (!body.id) {
+    body.id = uuid();
   }
 
-  const params = {
-    TableName: USERS_TABLE,
-    Item: { userId, name },
-  };
+  // Validate the user payload
+  const { success, data, error } = UserSchema.safeParse(body);
 
+  if (!success) {
+    return res
+      .status(400)
+      .json({ message: 'Invalid user payload', error: error.errors });
+  }
+
+  const { userRepository } = req.context;
   try {
-    const command = new PutCommand(params);
-    await docClient.send(command);
-    res.json({ userId, name });
+    await userRepository.create(data);
+    return res.json(data);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Could not create user' });
+    res.status(error.statusCode || 500).json({ error: error.message });
   }
-});
+};
+
+const deleteUser = async (req: Request, res: Response) => {
+  const { userRepository } = req.context;
+  const { id } = req.params;
+  await userRepository.delete(id);
+  res.status(204).send();
+};
+
+// Route definitions
+router.post('/', createUser);
+router.get('/:id', getUser);
+router.delete('/:id', deleteUser);
 
 router.use((req, res, next) => {
   return res.status(404).json({
-    error: 'Not Found',
+    error: 'Route not found',
   });
 });
 
