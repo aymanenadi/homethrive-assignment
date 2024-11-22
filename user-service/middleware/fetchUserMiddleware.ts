@@ -6,15 +6,19 @@ export const fetchUserMiddleware = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { id } = req.params;
-  const user = await req.context.userRepository.get(id);
+  try {
+    const { id } = req.params;
+    const user = await req.context.userRepository.get(id);
 
-  if (!user) {
-    next(new UserNotFoundError());
-    const error = new UserNotFoundError();
-    return res.status(error.statusCode).json({ error: error.message });
+    if (!user) {
+      next(new UserNotFoundError());
+      const error = new UserNotFoundError();
+      return res.status(error.statusCode).json({ error: error.message });
+    }
+
+    req.context.fetchedUser = user;
+    next();
+  } catch (error) {
+    next(error);
   }
-
-  req.context.fetchedUser = user;
-  next();
 };
