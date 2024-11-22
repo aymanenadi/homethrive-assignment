@@ -6,7 +6,7 @@ import { contextMiddleware } from './middleware/contextMiddleware';
 import { UserSchema } from './repositories';
 import { fetchUserMiddleware } from './middleware/fetchUserMiddleware';
 import { InvalidPayloadError } from './errors/InvalidPayloadError';
-import validateUpdateUserPayloadMiddleware from './middleware/validateUpdateUserPayloadMilddlware';
+import validateUpdateUserPayloadMiddleware from './middleware/validateUpdateUserPayloadMiddlware';
 
 const express = require('express');
 
