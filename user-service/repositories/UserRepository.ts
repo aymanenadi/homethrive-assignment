@@ -2,7 +2,12 @@ import {
   DynamoDBClient,
   ConditionalCheckFailedException,
 } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
+import {
+  DynamoDBDocumentClient,
+  GetCommand,
+  DeleteCommand,
+  PutCommand,
+} from '@aws-sdk/lib-dynamodb';
 import { z } from 'zod';
 import { UserAlreadyExistsError } from '../errors/UserAlreadyExistsError';
 import { UserNotFoundError } from '../errors/UserNotFoundError';
@@ -30,20 +35,22 @@ export const UserSchema = z.object({
 export type User = z.infer<typeof UserSchema>;
 
 export class UserRepository {
-  docClient: DynamoDBDocument;
+  docClient: DynamoDBDocumentClient;
 
   constructor() {
-    this.docClient = DynamoDBDocument.from(client);
+    this.docClient = DynamoDBDocumentClient.from(client);
   }
 
   async create(user: User) {
     try {
-      await this.docClient.put({
-        TableName: USERS_TABLE,
-        Item: user,
-        // Create only if a user with the same id doesn't already exist
-        ConditionExpression: 'attribute_not_exists(id)',
-      });
+      await this.docClient.send(
+        new PutCommand({
+          TableName: USERS_TABLE,
+          Item: user,
+          // Create only if a user with the same id doesn't already exist
+          ConditionExpression: 'attribute_not_exists(id)',
+        })
+      );
     } catch (error) {
       if (error instanceof ConditionalCheckFailedException) {
         throw new UserAlreadyExistsError();
@@ -53,27 +60,31 @@ export class UserRepository {
   }
 
   async get(id: string) {
-    const { Item } = await this.docClient.get({
-      TableName: USERS_TABLE,
-      Key: {
-        id,
-      },
-    });
+    const { Item } = await this.docClient.send(
+      new GetCommand({
+        TableName: USERS_TABLE,
+        Key: {
+          id,
+        },
+      })
+    );
 
     return Item as User | undefined;
   }
 
   async update(id: string, user: Partial<User>) {
     try {
-      await this.docClient.put({
-        TableName: USERS_TABLE,
-        Item: {
-          ...user,
-          id,
-        },
-        // Only update if the user already exists
-        ConditionExpression: 'attribute_exists(id)',
-      });
+      await this.docClient.send(
+        new PutCommand({
+          TableName: USERS_TABLE,
+          Item: {
+            ...user,
+            id,
+          },
+          // Only update if the user already exists
+          ConditionExpression: 'attribute_exists(id)',
+        })
+      );
     } catch (error) {
       if (error instanceof ConditionalCheckFailedException) {
         throw new UserNotFoundError();
@@ -83,11 +94,13 @@ export class UserRepository {
   }
 
   async delete(id: string) {
-    await this.docClient.delete({
-      TableName: USERS_TABLE,
-      Key: {
-        id,
-      },
-    });
+    await this.docClient.send(
+      new DeleteCommand({
+        TableName: USERS_TABLE,
+        Key: {
+          id,
+        },
+      })
+    );
   }
 }
