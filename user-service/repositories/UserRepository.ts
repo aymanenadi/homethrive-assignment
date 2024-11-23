@@ -19,57 +19,31 @@ const client = new DynamoDBClient();
 export const UserSchema = z.object({
   // UUID string
   id: z.string().uuid('The id needs to be a valid UUID'),
-  firstName: z.string(),
-  lastName: z.string(),
+  firstName: z
+    .string({ message: 'First name is required' })
+    .min(1, 'First name cannot be an empty string'),
+  lastName: z
+    .string({ message: 'Last name is required' })
+    .min(1, 'Last name cannot be an empty string'),
   // Array of unique emails, min 1, max 3
   emails: z
-    .array(z.string().email('Invalid email format'))
+    .array(z.string().email('Invalid email format'), {
+      message: 'The emails field is required',
+    })
     .min(1, 'A user must have at least 1 email')
     .max(3, 'A user can have at most 3 emails')
     .refine((emails) => new Set(emails).size === emails.length, {
       message: 'All the emails must be unique',
     }),
   // ISO date format (YYYY-MM-DD)
-  dob: z.string().date('dob must be in the format YYYY-MM-DD'),
+  dob: z
+    .string({
+      message: 'Date of birth is required',
+    })
+    .date('dob must be in the format YYYY-MM-DD'),
 });
 
 export type User = z.infer<typeof UserSchema>;
-
-/**
- * Converts a partial user object to DynamoDB UpdateExpression, ExpressionAttributeNames and ExpressionAttributeValues
- * @param user
- * @returns
- */
-const toUpdateExpressions = (user: Partial<User>) => {
-  const updateExpressions: string[] = [];
-  const expressionAttributeNames: { [key: string]: string } = {};
-  const expressionAttributeValues: { [key: string]: any } = {};
-
-  // Get all the attributes from the UserSchema except the id because we shouldn't update it
-  const validAttributes = Object.keys(UserSchema.shape).filter(
-    (field) => field !== 'id'
-  );
-
-  const processAttribute = (attribute: string) => {
-    if (user[attribute] !== undefined) {
-      updateExpressions.push(`#${attribute} = :${attribute}`);
-      expressionAttributeNames[`#${attribute}`] = attribute;
-      expressionAttributeValues[`:${attribute}`] = user[attribute];
-    }
-  };
-
-  validAttributes.forEach(processAttribute);
-
-  if (updateExpressions.length === 0) {
-    throw new Error('No valid user attributes to update');
-  }
-
-  return {
-    UpdateExpression: 'SET ' + updateExpressions.join(', '),
-    ExpressionAttributeNames: expressionAttributeNames,
-    ExpressionAttributeValues: expressionAttributeValues,
-  };
-};
 
 export class UserRepository {
   docClient: DynamoDBDocumentClient;
@@ -109,23 +83,14 @@ export class UserRepository {
     return Item as User | undefined;
   }
 
-  async update(id: string, user: Partial<User>) {
+  async update(user: User) {
     try {
-      const {
-        UpdateExpression,
-        ExpressionAttributeNames,
-        ExpressionAttributeValues,
-      } = toUpdateExpressions(user);
-
       const result = await this.docClient.send(
-        new UpdateCommand({
+        new PutCommand({
           TableName: USERS_TABLE,
-          Key: {
-            id,
-          },
-          UpdateExpression,
-          ExpressionAttributeNames,
-          ExpressionAttributeValues,
+          Item: user,
+          // Only update if the user already exists
+          ConditionExpression: 'attribute_exists(id)',
           ReturnValues: 'ALL_NEW',
         })
       );

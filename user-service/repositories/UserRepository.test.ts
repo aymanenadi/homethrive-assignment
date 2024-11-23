@@ -4,6 +4,7 @@ import {
   DynamoDBDocumentClient,
   PutCommand,
   UpdateCommand,
+  DeleteCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { UserRepository, User } from './UserRepository';
 import { UserAlreadyExistsError } from '../errors/UserAlreadyExistsError';
@@ -100,9 +101,9 @@ describe('UserRepository', () => {
   describe('delete', () => {
     it('should delete a user', async () => {
       dynamoDBMock
-        .on(PutCommand, {
+        .on(DeleteCommand, {
           TableName: process.env.USERS_TABLE,
-          Item: user,
+          Key: { id: user.id },
         })
         .resolves({});
 
@@ -112,35 +113,28 @@ describe('UserRepository', () => {
 
   describe('update', () => {
     it('should update an existing user', async () => {
-      const updatePayload = { firstName: 'Jane' };
-      const updatedUser = { ...user, ...updatePayload };
+      const updatedUser = { ...user, firstName: 'John - Updated' };
       dynamoDBMock
-        .on(UpdateCommand, {
+        .on(PutCommand, {
           TableName: process.env.USERS_TABLE,
-          Key: { id: user.id },
-          UpdateExpression: 'SET #firstName = :firstName',
-          ExpressionAttributeNames: { '#firstName': 'firstName' },
-          ExpressionAttributeValues: { ':firstName': 'Jane' },
-          ReturnValues: 'ALL_NEW',
+          Item: updatedUser,
+          ConditionExpression: 'attribute_exists(id)',
         })
         .resolves({
           Attributes: updatedUser,
         });
 
-      const result = await userRepository.update(user.id, updatePayload);
+      const result = await userRepository.update(updatedUser);
       expect(result).toEqual(updatedUser);
     });
 
     it('should throw UserNotFoundError if user does not exist', async () => {
-      const updatePayload = { firstName: 'Jane' };
+      const updatedUser = { ...user, firstName: 'John - Updated' };
       dynamoDBMock
-        .on(UpdateCommand, {
+        .on(PutCommand, {
           TableName: process.env.USERS_TABLE,
-          Key: { id: user.id },
-          UpdateExpression: 'SET #firstName = :firstName',
-          ExpressionAttributeNames: { '#firstName': 'firstName' },
-          ExpressionAttributeValues: { ':firstName': 'Jane' },
-          ReturnValues: 'ALL_NEW',
+          Item: updatedUser,
+          ConditionExpression: 'attribute_exists(id)',
         })
         .rejects(
           new ConditionalCheckFailedException({
@@ -149,35 +143,22 @@ describe('UserRepository', () => {
           })
         );
 
-      await expect(
-        userRepository.update(user.id, updatePayload)
-      ).rejects.toThrow(UserNotFoundError);
+      await expect(userRepository.update(updatedUser)).rejects.toThrow(
+        UserNotFoundError
+      );
     });
 
     it('should throw an error if DynamoDB throws an error', async () => {
-      const updatePayload = { firstName: 'Jane' };
+      const updatedUser = { ...user, firstName: 'John - Updated' };
       dynamoDBMock
-        .on(UpdateCommand, {
+        .on(PutCommand, {
           TableName: process.env.USERS_TABLE,
-          Key: { id: user.id },
-          UpdateExpression: 'SET #firstName = :firstName',
-          ExpressionAttributeNames: { '#firstName': 'firstName' },
-          ExpressionAttributeValues: { ':firstName': 'Jane' },
-          ReturnValues: 'ALL_NEW',
+          Item: updatedUser,
+          ConditionExpression: 'attribute_exists(id)',
         })
         .rejects(new Error('Internal Server Error'));
 
-      await expect(
-        userRepository.update(user.id, updatePayload)
-      ).rejects.toThrow(Error);
-    });
-
-    it('should throw an error if the update payload has just the id field', async () => {
-      const updatePayload = { id: '123e4567-e89b-12d3-a456-426614174000' };
-
-      await expect(
-        userRepository.update(user.id, updatePayload)
-      ).rejects.toThrow(Error);
+      await expect(userRepository.update(updatedUser)).rejects.toThrow(Error);
     });
   });
 });

@@ -28,9 +28,8 @@ describe('validateUpdateUserPayloadMiddleware', () => {
 
   it('should call next if the payload is valid', async () => {
     req.body = {
-      emails: [fetchedUser.emails[0], 'test2@gmail.com'],
+      ...fetchedUser,
       firstName: 'new first name',
-      lastName: 'new last name',
     };
 
     const next = jest.fn() as NextFunction;
@@ -42,6 +41,7 @@ describe('validateUpdateUserPayloadMiddleware', () => {
 
   it('should return an error if the payload is invalid', async () => {
     req.body = {
+      ...fetchedUser,
       emails: [fetchedUser.emails[0], 'invalid-email'],
       firstName: 'new first name',
       lastName: 'new last name',
@@ -53,6 +53,7 @@ describe('validateUpdateUserPayloadMiddleware', () => {
 
     expect(res.statusCode).toBe(400);
     expect(res._getJSONData()).toEqual({
+      message: 'Invalid payload',
       errors: [
         {
           code: 'invalid_string',
@@ -66,6 +67,7 @@ describe('validateUpdateUserPayloadMiddleware', () => {
 
   it('should return an error if the user is trying to remove an email', async () => {
     req.body = {
+      ...fetchedUser,
       emails: ['new.email@gmail.com'],
       firstName: 'new first name',
       lastName: 'new last name',
@@ -77,7 +79,7 @@ describe('validateUpdateUserPayloadMiddleware', () => {
 
     expect(res.statusCode).toBe(400);
     expect(res._getJSONData()).toEqual({
-      error: 'Deleting an email is not allowed',
+      message: 'Deleting an email is not allowed',
     });
   });
 });

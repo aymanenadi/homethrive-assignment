@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 
 import { UserSchema } from '../repositories/UserRepository';
 import { InvalidEmailDeletionError } from '../errors/InvalidEmailDeletionError';
+import { InvalidPayloadError } from '../errors/InvalidPayloadError';
 
 /**
  * Validates the following business requirements before updating a user
@@ -18,15 +19,18 @@ const validateUpdateUserPayloadMiddleware = (
   next: NextFunction
 ) => {
   try {
-    // Parse the payload to a partial of UserSchema and validate it
-    const partialUserSchema = UserSchema.partial();
-    const parsedPayload = partialUserSchema.parse(req.body);
+    // Validate the payload
+    const { success, data: payload, error } = UserSchema.safeParse(req.body);
+
+    if (!success) {
+      throw new InvalidPayloadError({ errors: error.errors });
+    }
 
     const fetchedUser = req.context.fetchedUser;
 
     // Check if the user is trying to remove an email
-    if (parsedPayload.emails && fetchedUser) {
-      const newEmailsSet = new Set(parsedPayload.emails);
+    if (payload.emails && fetchedUser) {
+      const newEmailsSet = new Set(payload.emails);
 
       const allExistingEmailsArePresent = fetchedUser.emails.every((email) => {
         return newEmailsSet.has(email);
@@ -34,7 +38,7 @@ const validateUpdateUserPayloadMiddleware = (
 
       if (!allExistingEmailsArePresent) {
         const error = new InvalidEmailDeletionError();
-        return res.status(error.statusCode).json({ error: error.message });
+        return res.status(error.statusCode).json({ message: error.message });
       }
     }
 
@@ -42,7 +46,9 @@ const validateUpdateUserPayloadMiddleware = (
     next();
   } catch (error) {
     // Handle validation errors
-    return res.status(400).json({ errors: error.errors });
+    return res
+      .status(error.statusCode)
+      .json({ message: error.message, errors: error.errors });
   }
 };
 

@@ -10,8 +10,8 @@ import validateUpdateUserPayloadMiddleware from './middleware/validateUpdateUser
 
 const express = require('express');
 
-const app = express();
-const router = express.Router();
+export const app = express();
+const usersRouter = express.Router();
 
 app.use(express.json());
 app.use(contextMiddleware);
@@ -49,17 +49,21 @@ const createUser = async (req: Request, res: Response) => {
 
 const deleteUser = async (req: Request, res: Response) => {
   const { userRepository } = req.context;
-  const { id } = req.params;
-  await userRepository.delete(id);
-  res.status(204).send();
+  try {
+    const { id } = req.params;
+    await userRepository.delete(id);
+    res.status(204).send();
+  } catch (error) {
+    // Return an error response if the delete operation fails
+    res.status(error.statusCode || 500).json({ error: error.message });
+  }
 };
 
 const updateUser = async (req: Request, res: Response) => {
-  const { userRepository } = req.context;
-  const { id } = req.params;
-  const user = req.body;
   try {
-    const updatedUser = await userRepository.update(id, user);
+    const { userRepository } = req.context;
+    const user = req.body;
+    const updatedUser = await userRepository.update(user);
     res.json(updatedUser);
   } catch (error) {
     // return an error response if the update operation fails
@@ -68,22 +72,21 @@ const updateUser = async (req: Request, res: Response) => {
 };
 
 // Route definitions
-router.post('/', createUser);
-router.get('/:id', fetchUserMiddleware, getUser);
-router.put(
+usersRouter.post('/', createUser);
+usersRouter.get('/:id', fetchUserMiddleware, getUser);
+usersRouter.put(
   '/:id',
   fetchUserMiddleware,
   validateUpdateUserPayloadMiddleware,
   updateUser
 );
-router.delete('/:id', deleteUser);
+usersRouter.delete('/:id', deleteUser);
 
-router.use((req: Request, res: Response, next: NextFunction) => {
+app.use('/users', usersRouter);
+app.use((req: Request, res: Response, next: NextFunction) => {
   return res.status(404).json({
     error: 'Route not found',
   });
 });
 
-app.use('/users', router);
-
-exports.handler = serverless(app);
+export const handler = serverless(app);
