@@ -50,15 +50,15 @@ const toUpdateExpressions = (user: Partial<User>) => {
     (field) => field !== 'id'
   );
 
-  const processField = (field: string) => {
-    if (user[field] !== undefined) {
-      updateExpressions.push(`#${field} = :${field}`);
-      expressionAttributeNames[`#${field}`] = field;
-      expressionAttributeValues[`:${field}`] = user[field];
+  const processAttribute = (attribute: string) => {
+    if (user[attribute] !== undefined) {
+      updateExpressions.push(`#${attribute} = :${attribute}`);
+      expressionAttributeNames[`#${attribute}`] = attribute;
+      expressionAttributeValues[`:${attribute}`] = user[attribute];
     }
   };
 
-  validAttributes.forEach(processField);
+  validAttributes.forEach(processAttribute);
 
   if (updateExpressions.length === 0) {
     throw new Error('No valid user attributes to update');

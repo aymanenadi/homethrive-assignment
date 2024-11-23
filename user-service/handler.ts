@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import serverless, { Result } from 'serverless-http';
+import serverless from 'serverless-http';
 import { v4 as uuid } from 'uuid';
 
 import { contextMiddleware } from './middleware/contextMiddleware';
