@@ -14,24 +14,17 @@ import { sendErrorResponse } from '../utils/httpResponses';
  * @param next
  * @returns
  */
-const validateUpdateUserPayloadMiddleware = (
+export const validateEmailUpdatesMiddleware = (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    // Validate the payload
-    const { success, data: payload, error } = UserSchema.safeParse(req.body);
-
-    if (!success) {
-      throw new InvalidPayloadError({ errors: error.errors });
-    }
-
     const fetchedUser = req.context.fetchedUser;
 
     // Check if the user is trying to remove an email
-    if (payload.emails && fetchedUser) {
-      const newEmailsSet = new Set(payload.emails);
+    if (req.body?.emails && fetchedUser) {
+      const newEmailsSet = new Set(req.body.emails);
 
       const allExistingEmailsArePresent = fetchedUser.emails.every((email) => {
         return newEmailsSet.has(email);
@@ -45,9 +38,6 @@ const validateUpdateUserPayloadMiddleware = (
     // Proceed to the next middleware or route handler
     next();
   } catch (error) {
-    // Handle validation errors
     next(error);
   }
 };
-
-export default validateUpdateUserPayloadMiddleware;

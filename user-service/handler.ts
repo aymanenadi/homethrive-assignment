@@ -3,12 +3,11 @@ import serverless from 'serverless-http';
 import { v4 as uuid } from 'uuid';
 
 import { contextMiddleware } from './middleware/contextMiddleware';
-import { UserSchema } from './types/user';
 import { fetchUserMiddleware } from './middleware/fetchUserMiddleware';
-import { InvalidPayloadError } from './errors/InvalidPayloadError';
-import validateUpdateUserPayloadMiddleware from './middleware/validateUpdateUserPayloadMiddlware';
+import { validateEmailUpdatesMiddleware } from './middleware/validateEmailUpdatesMiddleware';
 import { sendErrorResponse, sendSuccessResponse } from './utils/httpResponses';
 import { errorHandlerMiddleware } from './middleware/errorHandlerMiddleware';
+import { validatePayloadMiddleware } from './middleware/validatePayloadMiddleware';
 
 const express = require('express');
 
@@ -32,19 +31,11 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
   if (!body.id) {
     body.id = uuid();
   }
-  const { userRepository } = req.context;
 
   try {
-    // Validate the user payload
-    const { success, data, error } = UserSchema.safeParse(body);
-
-    // Throw an error if the payload is invalid
-    if (!success) {
-      throw new InvalidPayloadError({ errors: error.errors });
-    }
-
-    await userRepository.create(data);
-    return sendSuccessResponse({ res, data, statusCode: 201 });
+    const { userRepository } = req.context;
+    await userRepository.create(body);
+    return sendSuccessResponse({ res, data: body, statusCode: 201 });
   } catch (error) {
     next(error);
   }
@@ -73,12 +64,13 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
 };
 
 // Route definitions
-usersRouter.post('/', createUser);
+usersRouter.post('/', validatePayloadMiddleware(['id']), createUser);
 usersRouter.get('/:id', fetchUserMiddleware, getUser);
 usersRouter.put(
   '/:id',
   fetchUserMiddleware,
-  validateUpdateUserPayloadMiddleware,
+  validatePayloadMiddleware(),
+  validateEmailUpdatesMiddleware,
   updateUser
 );
 usersRouter.delete('/:id', deleteUser);

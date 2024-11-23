@@ -1,21 +1,14 @@
 import request from 'supertest';
-import { v4 as uuid } from 'uuid';
 import { app } from './handler';
 import { UserRepository } from './repositories/UserRepository';
-import { User } from './types/user';
+import { toMockUser } from './test-utils/mocks/user';
 
 let userRepositoryGetSpy: jest.SpyInstance;
 let userRepositoryCreateSpy: jest.SpyInstance;
 let userRepositoryUpdateSpy: jest.SpyInstance;
 let userRepositoryDeleteSpy: jest.SpyInstance;
 
-const mockUser: User = {
-  id: uuid(),
-  firstName: 'John',
-  lastName: 'Doe',
-  emails: ['john.doe1@test.com', 'john.doe2@test.com'],
-  dob: '1990-01-01',
-};
+const mockUser = toMockUser();
 
 describe('user-service handler', () => {
   beforeEach(() => {

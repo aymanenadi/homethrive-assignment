@@ -1,4 +1,5 @@
-import { User, UserRepository } from '../../repositories';
+import { User } from '../../types/user';
+import { UserRepository } from '../../repositories/UserRepository';
 
 // Define the context object that will be available in the Express request object
 interface AppContext {

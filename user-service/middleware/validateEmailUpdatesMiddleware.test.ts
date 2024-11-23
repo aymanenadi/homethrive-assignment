@@ -1,24 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
-import validateUpdateUserPayloadMiddleware from './validateUpdateUserPayloadMiddlware';
-import { User } from '../types/user';
-import { v4 as uuid } from 'uuid';
+import { validateEmailUpdatesMiddleware } from './validateEmailUpdatesMiddleware';
 import { createRequest, createResponse, MockResponse } from 'node-mocks-http';
-import { InvalidPayloadError } from '../errors/InvalidPayloadError';
 import { InvalidEmailDeletionError } from '../errors/InvalidEmailDeletionError';
+import { toMockUser } from '../test-utils/mocks/user';
 
-const fetchedUser: User = {
-  id: uuid(),
-  emails: ['test@gmail.com'],
-  firstName: 'Test',
-  lastName: 'User',
-  dob: '1990-01-01',
-};
+const fetchedUser = toMockUser();
 
 let req: Request;
 let res: MockResponse<Response<any, Record<string, any>>>;
 
-describe('validateUpdateUserPayloadMiddleware', () => {
+describe('validateEmailUpdatesMiddleware', () => {
   beforeEach(() => {
+    jest.clearAllMocks();
+
     req = createRequest({
       params: { id: fetchedUser.id },
       context: {
@@ -36,24 +30,10 @@ describe('validateUpdateUserPayloadMiddleware', () => {
 
     const next = jest.fn() as NextFunction;
 
-    await validateUpdateUserPayloadMiddleware(req, res, next);
+    await validateEmailUpdatesMiddleware(req, res, next);
 
     expect(next).toHaveBeenCalled();
     expect(next).not.toHaveBeenCalledWith(expect.any(Error));
-  });
-
-  it('should return an error if the payload is invalid', async () => {
-    req.body = {
-      ...fetchedUser,
-      emails: [fetchedUser.emails[0], 'invalid-email'],
-      firstName: 'new first name',
-      lastName: 'new last name',
-    };
-
-    const next = jest.fn() as NextFunction;
-
-    await validateUpdateUserPayloadMiddleware(req, res, next);
-    expect(next).toHaveBeenCalledWith(expect.any(InvalidPayloadError));
   });
 
   it('should return an error if the user is trying to remove an email', async () => {
@@ -66,8 +46,7 @@ describe('validateUpdateUserPayloadMiddleware', () => {
 
     const next = jest.fn() as NextFunction;
 
-    await validateUpdateUserPayloadMiddleware(req, res, next);
-
+    await validateEmailUpdatesMiddleware(req, res, next);
     expect(next).toHaveBeenCalledWith(expect.any(InvalidEmailDeletionError));
   });
 });
