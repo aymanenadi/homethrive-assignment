@@ -41,4 +41,11 @@ describe('InvalidPayloadError', () => {
     });
     expect(error.stack).toBeDefined();
   });
+
+  it('should use a default message if none is provided', () => {
+    const error = new InvalidPayloadError({
+      errors: zodErrors,
+    });
+    expect(error.message).toBe('Invalid payload');
+  });
 });

@@ -59,8 +59,8 @@ const updateUser = async (req: Request, res: Response) => {
   const { id } = req.params;
   const user = req.body;
   try {
-    await userRepository.update(id, user);
-    res.json(user);
+    const updatedUser = await userRepository.update(id, user);
+    res.json(updatedUser);
   } catch (error) {
     // return an error response if the update operation fails
     res.status(error.statusCode || 500).json({ error: error.message });

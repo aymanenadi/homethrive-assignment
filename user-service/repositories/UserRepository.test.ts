@@ -3,11 +3,11 @@ import {
   GetCommand,
   DynamoDBDocumentClient,
   PutCommand,
+  UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { UserRepository, User } from './UserRepository';
 import { UserAlreadyExistsError } from '../errors/UserAlreadyExistsError';
 import { UserNotFoundError } from '../errors/UserNotFoundError';
-import { describe } from 'node:test';
 import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
 
 describe('UserRepository', () => {
@@ -57,6 +57,18 @@ describe('UserRepository', () => {
         UserAlreadyExistsError
       );
     });
+
+    it('should throw an error if DynamoDB throws an error', async () => {
+      dynamoDBMock
+        .on(PutCommand, {
+          TableName: process.env.USERS_TABLE,
+          Item: user,
+          ConditionExpression: 'attribute_not_exists(id)',
+        })
+        .rejects(new Error('Internal Server Error'));
+
+      await expect(userRepository.create(user)).rejects.toThrow(Error);
+    });
   });
 
   describe('get', () => {
@@ -100,25 +112,35 @@ describe('UserRepository', () => {
 
   describe('update', () => {
     it('should update an existing user', async () => {
+      const updatePayload = { firstName: 'Jane' };
+      const updatedUser = { ...user, ...updatePayload };
       dynamoDBMock
-        .on(PutCommand, {
+        .on(UpdateCommand, {
           TableName: process.env.USERS_TABLE,
-          Item: { ...user, firstName: 'Jane' },
-          ConditionExpression: 'attribute_exists(id)',
+          Key: { id: user.id },
+          UpdateExpression: 'SET #firstName = :firstName',
+          ExpressionAttributeNames: { '#firstName': 'firstName' },
+          ExpressionAttributeValues: { ':firstName': 'Jane' },
+          ReturnValues: 'ALL_NEW',
         })
-        .resolves({});
+        .resolves({
+          Attributes: updatedUser,
+        });
 
-      await expect(
-        userRepository.update(user.id, { firstName: 'Jane' })
-      ).resolves.not.toThrow();
+      const result = await userRepository.update(user.id, updatePayload);
+      expect(result).toEqual(updatedUser);
     });
 
-    it('should throw UserNotFoundError if user does not exist when updating', async () => {
+    it('should throw UserNotFoundError if user does not exist', async () => {
+      const updatePayload = { firstName: 'Jane' };
       dynamoDBMock
-        .on(PutCommand, {
+        .on(UpdateCommand, {
           TableName: process.env.USERS_TABLE,
-          Item: { id: user.id, firstName: 'Jane' },
-          ConditionExpression: 'attribute_exists(id)',
+          Key: { id: user.id },
+          UpdateExpression: 'SET #firstName = :firstName',
+          ExpressionAttributeNames: { '#firstName': 'firstName' },
+          ExpressionAttributeValues: { ':firstName': 'Jane' },
+          ReturnValues: 'ALL_NEW',
         })
         .rejects(
           new ConditionalCheckFailedException({
@@ -128,8 +150,34 @@ describe('UserRepository', () => {
         );
 
       await expect(
-        userRepository.update(user.id, { firstName: 'Jane' })
+        userRepository.update(user.id, updatePayload)
       ).rejects.toThrow(UserNotFoundError);
+    });
+
+    it('should throw an error if DynamoDB throws an error', async () => {
+      const updatePayload = { firstName: 'Jane' };
+      dynamoDBMock
+        .on(UpdateCommand, {
+          TableName: process.env.USERS_TABLE,
+          Key: { id: user.id },
+          UpdateExpression: 'SET #firstName = :firstName',
+          ExpressionAttributeNames: { '#firstName': 'firstName' },
+          ExpressionAttributeValues: { ':firstName': 'Jane' },
+          ReturnValues: 'ALL_NEW',
+        })
+        .rejects(new Error('Internal Server Error'));
+
+      await expect(
+        userRepository.update(user.id, updatePayload)
+      ).rejects.toThrow(Error);
+    });
+
+    it('should throw an error if the update payload has just the id field', async () => {
+      const updatePayload = { id: '123e4567-e89b-12d3-a456-426614174000' };
+
+      await expect(
+        userRepository.update(user.id, updatePayload)
+      ).rejects.toThrow(Error);
     });
   });
 });
