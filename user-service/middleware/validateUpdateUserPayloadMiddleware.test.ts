@@ -3,6 +3,8 @@ import validateUpdateUserPayloadMiddleware from './validateUpdateUserPayloadMidd
 import { User } from '../types/user';
 import { v4 as uuid } from 'uuid';
 import { createRequest, createResponse, MockResponse } from 'node-mocks-http';
+import { InvalidPayloadError } from '../errors/InvalidPayloadError';
+import { InvalidEmailDeletionError } from '../errors/InvalidEmailDeletionError';
 
 const fetchedUser: User = {
   id: uuid(),
@@ -37,6 +39,7 @@ describe('validateUpdateUserPayloadMiddleware', () => {
     await validateUpdateUserPayloadMiddleware(req, res, next);
 
     expect(next).toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalledWith(expect.any(Error));
   });
 
   it('should return an error if the payload is invalid', async () => {
@@ -50,19 +53,7 @@ describe('validateUpdateUserPayloadMiddleware', () => {
     const next = jest.fn() as NextFunction;
 
     await validateUpdateUserPayloadMiddleware(req, res, next);
-
-    expect(res.statusCode).toBe(400);
-    expect(res._getJSONData()).toEqual({
-      message: 'Invalid payload',
-      errors: [
-        {
-          code: 'invalid_string',
-          message: 'Invalid email format',
-          path: ['emails', 1],
-          validation: 'email',
-        },
-      ],
-    });
+    expect(next).toHaveBeenCalledWith(expect.any(InvalidPayloadError));
   });
 
   it('should return an error if the user is trying to remove an email', async () => {
@@ -77,9 +68,6 @@ describe('validateUpdateUserPayloadMiddleware', () => {
 
     await validateUpdateUserPayloadMiddleware(req, res, next);
 
-    expect(res.statusCode).toBe(400);
-    expect(res._getJSONData()).toEqual({
-      message: 'Deleting an email is not allowed',
-    });
+    expect(next).toHaveBeenCalledWith(expect.any(InvalidEmailDeletionError));
   });
 });

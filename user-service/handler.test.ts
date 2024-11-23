@@ -37,20 +37,30 @@ describe('user-service handler', () => {
       userRepositoryGetSpy.mockResolvedValue(mockUser);
       const response = await request(app).get(`/users/${mockUser.id}`);
       expect(response.status).toBe(200);
-      expect(response.body).toEqual(mockUser);
+      expect(response.body).toEqual({
+        status: 'success',
+        data: mockUser,
+      });
     });
 
     it('should return 404 if user is not found', async () => {
       userRepositoryGetSpy.mockResolvedValue(null);
       const response = await request(app).get(`/users/${mockUser.id}`);
       expect(response.status).toBe(404);
-      expect(response.body).toEqual({ error: 'User not found' });
+      expect(response.body).toEqual({
+        status: 'error',
+        message: 'User not found',
+      });
     });
 
     it('should return 500 if an internal serror occurs', async () => {
       userRepositoryGetSpy.mockRejectedValue(new Error('Database error'));
       const response = await request(app).get(`/users/${mockUser.id}`);
       expect(response.status).toBe(500);
+      expect(response.body).toEqual({
+        status: 'error',
+        message: 'Database error',
+      });
     });
   });
 
@@ -65,8 +75,14 @@ describe('user-service handler', () => {
         .post('/users')
         .send(newUser)
         .set('Accept', 'application/json');
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual({ ...newUser, id: expect.any(String) });
+      expect(response.status).toBe(201);
+      expect(response.body).toEqual({
+        status: 'success',
+        data: {
+          ...newUser,
+          id: expect.any(String),
+        },
+      });
     });
 
     it('should accept a valid user payload with a uuid', async () => {
@@ -74,8 +90,11 @@ describe('user-service handler', () => {
         .post('/users')
         .send(mockUser)
         .set('Accept', 'application/json');
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual(mockUser);
+      expect(response.status).toBe(201);
+      expect(response.body).toEqual({
+        status: 'success',
+        data: mockUser,
+      });
     });
 
     it('should return 400 if the user does not have any emails', async () => {
@@ -86,6 +105,7 @@ describe('user-service handler', () => {
         .set('Accept', 'application/json');
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
+        status: 'error',
         message: 'Invalid payload',
         errors: [
           expect.objectContaining({
@@ -104,6 +124,7 @@ describe('user-service handler', () => {
         .set('Accept', 'application/json');
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
+        status: 'error',
         message: 'Invalid payload',
         errors: [
           expect.objectContaining({
@@ -122,6 +143,7 @@ describe('user-service handler', () => {
         .set('Accept', 'application/json');
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
+        status: 'error',
         message: 'Invalid payload',
         errors: [
           expect.objectContaining({
@@ -140,6 +162,7 @@ describe('user-service handler', () => {
         .set('Accept', 'application/json');
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
+        status: 'error',
         message: 'Invalid payload',
         errors: [
           expect.objectContaining({
@@ -158,6 +181,7 @@ describe('user-service handler', () => {
         .set('Accept', 'application/json');
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
+        status: 'error',
         message: 'Invalid payload',
         errors: [
           expect.objectContaining({
@@ -176,6 +200,7 @@ describe('user-service handler', () => {
         .set('Accept', 'application/json');
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
+        status: 'error',
         message: 'Invalid payload',
         errors: [
           expect.objectContaining({
@@ -194,6 +219,7 @@ describe('user-service handler', () => {
         .set('Accept', 'application/json');
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
+        status: 'error',
         message: 'Invalid payload',
         errors: [
           expect.objectContaining({
@@ -220,6 +246,7 @@ describe('user-service handler', () => {
         .set('Accept', 'application/json');
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
+        status: 'error',
         message: 'Invalid payload',
         errors: [
           expect.objectContaining({
@@ -238,6 +265,7 @@ describe('user-service handler', () => {
         .set('Accept', 'application/json');
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
+        status: 'error',
         message: 'Invalid payload',
         errors: [
           expect.objectContaining({
@@ -255,6 +283,7 @@ describe('user-service handler', () => {
         .set('Accept', 'application/json');
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
+        status: 'error',
         message: 'Invalid payload',
         errors: [
           expect.objectContaining({
@@ -272,6 +301,7 @@ describe('user-service handler', () => {
         .set('Accept', 'application/json');
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
+        status: 'error',
         message: 'Invalid payload',
         errors: [
           expect.objectContaining({
@@ -285,6 +315,10 @@ describe('user-service handler', () => {
       userRepositoryCreateSpy.mockRejectedValue(new Error('Database error'));
       const response = await request(app).post('/users').send(mockUser);
       expect(response.status).toBe(500);
+      expect(response.body).toEqual({
+        status: 'error',
+        message: 'Database error',
+      });
     });
   });
 
@@ -315,7 +349,10 @@ describe('user-service handler', () => {
         .put(`/users/${mockUser.id}`)
         .send(updatedUser);
       expect(response.status).toBe(200);
-      expect(response.body).toStrictEqual(updatedUser);
+      expect(response.body).toStrictEqual({
+        status: 'success',
+        data: updatedUser,
+      });
     });
 
     it('should return 404 if the user is not found', async () => {
@@ -324,7 +361,10 @@ describe('user-service handler', () => {
         .put(`/users/${mockUser.id}`)
         .send(mockUser);
       expect(response.status).toBe(404);
-      expect(response.body).toEqual({ error: 'User not found' });
+      expect(response.body).toEqual({
+        status: 'error',
+        message: 'User not found',
+      });
     });
 
     it('should return 400 if the payload is invalid', async () => {
@@ -337,6 +377,7 @@ describe('user-service handler', () => {
         .send(invalidUser);
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
+        status: 'error',
         message: 'Invalid payload',
         errors: [
           expect.objectContaining({
@@ -354,6 +395,7 @@ describe('user-service handler', () => {
         .set('Accept', 'application/json');
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
+        status: 'error',
         message: 'Invalid payload',
         errors: [
           expect.objectContaining({
@@ -372,6 +414,7 @@ describe('user-service handler', () => {
         .set('Accept', 'application/json');
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
+        status: 'error',
         message: 'Invalid payload',
         errors: [
           expect.objectContaining({
@@ -390,6 +433,7 @@ describe('user-service handler', () => {
         .set('Accept', 'application/json');
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
+        status: 'error',
         message: 'Invalid payload',
         errors: [
           expect.objectContaining({
@@ -408,6 +452,7 @@ describe('user-service handler', () => {
         .set('Accept', 'application/json');
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
+        status: 'error',
         message: 'Invalid payload',
         errors: [
           expect.objectContaining({
@@ -426,6 +471,7 @@ describe('user-service handler', () => {
         .set('Accept', 'application/json');
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
+        status: 'error',
         message: 'Invalid payload',
         errors: [
           expect.objectContaining({
@@ -444,6 +490,7 @@ describe('user-service handler', () => {
         .set('Accept', 'application/json');
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
+        status: 'error',
         message: 'Invalid payload',
         errors: [
           expect.objectContaining({
@@ -470,6 +517,7 @@ describe('user-service handler', () => {
         .set('Accept', 'application/json');
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
+        status: 'error',
         message: 'Invalid payload',
         errors: [
           expect.objectContaining({
@@ -491,6 +539,7 @@ describe('user-service handler', () => {
         .set('Accept', 'application/json');
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
+        status: 'error',
         message: 'Deleting an email is not allowed',
       });
     });
@@ -501,12 +550,19 @@ describe('user-service handler', () => {
         .put(`/users/${mockUser.id}`)
         .send(mockUser);
       expect(response.status).toBe(500);
+      expect(response.body).toEqual({
+        status: 'error',
+        message: 'Database error',
+      });
     });
   });
 
   it('should return 404 for unknown routes', async () => {
     const response = await request(app).get('/unknown-route');
     expect(response.status).toBe(404);
-    expect(response.body).toEqual({ error: 'Route not found' });
+    expect(response.body).toEqual({
+      status: 'error',
+      message: 'Route not found',
+    });
   });
 });

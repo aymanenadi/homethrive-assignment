@@ -7,6 +7,8 @@ import { UserSchema } from './types/user';
 import { fetchUserMiddleware } from './middleware/fetchUserMiddleware';
 import { InvalidPayloadError } from './errors/InvalidPayloadError';
 import validateUpdateUserPayloadMiddleware from './middleware/validateUpdateUserPayloadMiddlware';
+import { sendErrorResponse, sendSuccessResponse } from './utils/httpResponses';
+import { errorHandlerMiddleware } from './middleware/errorHandlerMiddleware';
 
 const express = require('express');
 
@@ -17,10 +19,14 @@ app.use(express.json());
 app.use(contextMiddleware);
 
 const getUser = async (req: Request, res: Response) => {
-  res.json(req.context.fetchedUser);
+  return sendSuccessResponse({
+    res,
+    data: req.context.fetchedUser,
+    statusCode: 200,
+  });
 };
 
-const createUser = async (req: Request, res: Response) => {
+const createUser = async (req: Request, res: Response, next: NextFunction) => {
   const body = req.body;
   // Generate an ID if not provided
   if (!body.id) {
@@ -38,36 +44,31 @@ const createUser = async (req: Request, res: Response) => {
     }
 
     await userRepository.create(data);
-    return res.json(data);
+    return sendSuccessResponse({ res, data, statusCode: 201 });
   } catch (error) {
-    // Return an error response if the validation or the create operation fails
-    res
-      .status(error.statusCode || 500)
-      .json({ message: error.message, errors: error.errors });
+    next(error);
   }
 };
 
-const deleteUser = async (req: Request, res: Response) => {
+const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
   const { userRepository } = req.context;
   try {
     const { id } = req.params;
     await userRepository.delete(id);
-    res.status(204).send();
+    return sendSuccessResponse({ res, statusCode: 204 });
   } catch (error) {
-    // Return an error response if the delete operation fails
-    res.status(error.statusCode || 500).json({ error: error.message });
+    next(error);
   }
 };
 
-const updateUser = async (req: Request, res: Response) => {
+const updateUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { userRepository } = req.context;
     const user = req.body;
     const updatedUser = await userRepository.update(user);
-    res.json(updatedUser);
+    return sendSuccessResponse({ res, data: updatedUser, statusCode: 200 });
   } catch (error) {
-    // return an error response if the update operation fails
-    res.status(error.statusCode || 500).json({ error: error.message });
+    next(error);
   }
 };
 
@@ -83,9 +84,15 @@ usersRouter.put(
 usersRouter.delete('/:id', deleteUser);
 
 app.use('/users', usersRouter);
+
+// Error handler
+app.use(errorHandlerMiddleware);
+
 app.use((req: Request, res: Response, next: NextFunction) => {
-  return res.status(404).json({
-    error: 'Route not found',
+  return sendErrorResponse({
+    res,
+    statusCode: 404,
+    message: 'Route not found',
   });
 });
 

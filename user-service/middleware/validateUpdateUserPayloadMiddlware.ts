@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import { InvalidEmailDeletionError } from '../errors/InvalidEmailDeletionError';
 import { InvalidPayloadError } from '../errors/InvalidPayloadError';
 import { UserSchema } from '../types/user';
+import { sendErrorResponse } from '../utils/httpResponses';
 
 /**
  * Validates the following business requirements before updating a user
@@ -37,8 +38,7 @@ const validateUpdateUserPayloadMiddleware = (
       });
 
       if (!allExistingEmailsArePresent) {
-        const error = new InvalidEmailDeletionError();
-        return res.status(error.statusCode).json({ message: error.message });
+        throw new InvalidEmailDeletionError();
       }
     }
 
@@ -46,9 +46,7 @@ const validateUpdateUserPayloadMiddleware = (
     next();
   } catch (error) {
     // Handle validation errors
-    return res
-      .status(error.statusCode)
-      .json({ message: error.message, errors: error.errors });
+    next(error);
   }
 };
 
