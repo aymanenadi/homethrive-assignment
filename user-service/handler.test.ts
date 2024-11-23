@@ -1,7 +1,8 @@
 import request from 'supertest';
 import { v4 as uuid } from 'uuid';
 import { app } from './handler';
-import { UserRepository, User } from './repositories/UserRepository';
+import { UserRepository } from './repositories/UserRepository';
+import { User } from './types/user';
 
 let userRepositoryGetSpy: jest.SpyInstance;
 let userRepositoryCreateSpy: jest.SpyInstance;

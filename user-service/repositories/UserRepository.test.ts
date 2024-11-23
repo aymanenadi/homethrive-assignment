@@ -6,10 +6,11 @@ import {
   UpdateCommand,
   DeleteCommand,
 } from '@aws-sdk/lib-dynamodb';
-import { UserRepository, User } from './UserRepository';
+import { UserRepository } from './UserRepository';
 import { UserAlreadyExistsError } from '../errors/UserAlreadyExistsError';
 import { UserNotFoundError } from '../errors/UserNotFoundError';
 import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
+import { User } from '../types/user';
 
 describe('UserRepository', () => {
   const dynamoDBMock = mockClient(DynamoDBDocumentClient);

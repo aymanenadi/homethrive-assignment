@@ -3,7 +3,7 @@ import serverless from 'serverless-http';
 import { v4 as uuid } from 'uuid';
 
 import { contextMiddleware } from './middleware/contextMiddleware';
-import { UserSchema } from './repositories';
+import { UserSchema } from './types/user';
 import { fetchUserMiddleware } from './middleware/fetchUserMiddleware';
 import { InvalidPayloadError } from './errors/InvalidPayloadError';
 import validateUpdateUserPayloadMiddleware from './middleware/validateUpdateUserPayloadMiddlware';

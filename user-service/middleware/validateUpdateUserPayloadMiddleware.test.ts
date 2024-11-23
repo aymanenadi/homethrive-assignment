@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import validateUpdateUserPayloadMiddleware from './validateUpdateUserPayloadMiddlware';
-import { User } from '../repositories';
+import { User } from '../types/user';
 import { v4 as uuid } from 'uuid';
 import { createRequest, createResponse, MockResponse } from 'node-mocks-http';
 
