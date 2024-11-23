@@ -90,6 +90,21 @@ describe('user-service handler', () => {
       });
     });
 
+    it('should omit additional keys', async () => {
+      const response = await request(app)
+        .post('/users')
+        .send({
+          ...mockUser,
+          additionalKey: 'additionalValue',
+        })
+        .set('Accept', 'application/json');
+      expect(response.status).toBe(201);
+      expect(response.body).toEqual({
+        status: 'success',
+        data: mockUser,
+      });
+    });
+
     it('should return 400 if the user does not have any emails', async () => {
       const userWithoutEmails = { ...mockUser, emails: [] };
       const response = await request(app)
