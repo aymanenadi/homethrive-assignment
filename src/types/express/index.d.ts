@@ -1,4 +1,4 @@
-import { User } from '../../types/user';
+import { User } from '../user';
 import { UserRepository } from '../../repositories/UserRepository';
 
 // Define the context object that will be available in the Express request object
