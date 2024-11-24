@@ -3,7 +3,6 @@ import {
   GetCommand,
   DynamoDBDocumentClient,
   PutCommand,
-  UpdateCommand,
   DeleteCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { UserRepository } from './UserRepository';

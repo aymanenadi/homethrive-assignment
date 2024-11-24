@@ -1,9 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-
 import { InvalidEmailDeletionError } from '../errors/InvalidEmailDeletionError';
-import { InvalidPayloadError } from '../errors/InvalidPayloadError';
-import { UserSchema } from '../types/user';
-import { sendErrorResponse } from '../utils/httpResponses';
 
 /**
  * Validates the following business requirements before updating a user

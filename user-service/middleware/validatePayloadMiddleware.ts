@@ -20,7 +20,6 @@ export const validatePayloadMiddleware =
       next(new InvalidPayloadError({ errors: error.errors }));
     }
     // Replace the request body with the validated data.
-    // Additional keys are stipped out.
     // This is useful for routes that depend on the validated data.
     req.body = data;
     next();

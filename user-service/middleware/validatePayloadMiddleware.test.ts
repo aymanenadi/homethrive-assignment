@@ -1,5 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
-import { User, UserSchema } from '../types/user';
+import { NextFunction } from 'express';
 import { InvalidPayloadError } from '../errors/InvalidPayloadError';
 import { validatePayloadMiddleware } from './validatePayloadMiddleware';
 import { createRequest, createResponse } from 'node-mocks-http';

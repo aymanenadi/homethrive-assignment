@@ -20,7 +20,6 @@ provider:
           Action:
             - dynamodb:GetItem
             - dynamodb:PutItem
-            - dynamodb:UpdateItem
             - dynamodb:DeleteItem
           Resource:
             - Fn::GetAtt: [UsersTable, Arn]

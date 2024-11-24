@@ -28,6 +28,6 @@ export const UserSchema = z
       .date('dob must be in the format YYYY-MM-DD'),
   })
   .required()
-  .strict();
+  .strict(); // Fail the validation if there are extra fields
 
 export type User = z.infer<typeof UserSchema>;
