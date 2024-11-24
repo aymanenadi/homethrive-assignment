@@ -66,9 +66,7 @@ export class UserRepository {
       );
     } catch (error) {
       if (error instanceof ConditionalCheckFailedException) {
-        throw new UserNotFoundError(
-          `A user with ID "${user.id}" was not found`
-        );
+        throw new UserNotFoundError();
       }
       throw error;
     }
