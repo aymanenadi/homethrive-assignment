@@ -5,9 +5,10 @@ import { v4 as uuid } from 'uuid';
 import { contextMiddleware } from './middleware/contextMiddleware';
 import { fetchUserMiddleware } from './middleware/fetchUserMiddleware';
 import { validateEmailUpdatesMiddleware } from './middleware/validateEmailUpdatesMiddleware';
-import { sendErrorResponse, sendSuccessResponse } from './utils/httpResponses';
+import { sendSuccessResponse } from './utils/httpResponses';
 import { errorHandlerMiddleware } from './middleware/errorHandlerMiddleware';
 import { validatePayloadMiddleware } from './middleware/validatePayloadMiddleware';
+import { RouteNotFoundError } from './errors/RouteNotFoundError';
 
 const express = require('express');
 
@@ -77,15 +78,12 @@ usersRouter.delete('/:id', deleteUser);
 
 app.use('/users', usersRouter);
 
+// Route not found handler
+app.use((req: Request, res: Response, next: NextFunction) => {
+  next(new RouteNotFoundError());
+});
+
 // Error handler
 app.use(errorHandlerMiddleware);
-
-app.use((req: Request, res: Response, next: NextFunction) => {
-  return sendErrorResponse({
-    res,
-    statusCode: 404,
-    message: 'Route not found',
-  });
-});
 
 export const handler = serverless(app);

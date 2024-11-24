@@ -1,7 +1,3 @@
-# "org" ensures this Service is used with the correct Serverless Framework Access Key.
-org: aymanecorp
-# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
-app: homethrive-assignment
 # "service" is the name of this project. This will also be added to your AWS resource names.
 service: user-service
 
@@ -13,6 +9,8 @@ stages:
 provider:
   name: aws
   runtime: nodejs20.x
+  # Optional: Add region configuration
+  # region: us-east-1
   iam:
     role:
       statements:
@@ -28,7 +26,7 @@ provider:
 
 functions:
   api:
-    handler: handler.handler
+    handler: src/handler.handler
     events:
       - http:
           path: users

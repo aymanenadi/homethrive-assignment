@@ -1,90 +1,253 @@
-<!--
-title: 'Serverless Framework Node Express API service backed by DynamoDB on AWS'
-description: 'This template demonstrates how to develop and deploy a simple Node Express API service backed by DynamoDB running on AWS Lambda using the Serverless Framework.'
-layout: Doc
-framework: v4
-platform: AWS
-language: nodeJS
-priority: 1
-authorLink: 'https://github.com/serverless'
-authorName: 'Serverless, Inc.'
-authorAvatar: 'https://avatars1.githubusercontent.com/u/13742415?s=200&v=4'
--->
+# User Service API
 
-# Serverless Framework Node Express API on AWS
+A serverless REST API for managing user data, built with Express.js and deployed on AWS Lambda using the Serverless Framework.
 
-This template demonstrates how to develop and deploy a simple Node Express API service, backed by DynamoDB table, running on AWS Lambda using the Serverless Framework.
+## Installation
 
-This template configures a single function, `api`, which is responsible for handling all incoming requests using the `httpApi` event. To learn more about `httpApi` event configuration options, please refer to [httpApi event docs](https://www.serverless.com/framework/docs/providers/aws/events/http-api/). As the event is configured in a way to accept all incoming requests, the Express.js framework is responsible for routing and handling requests internally. This implementation uses the `serverless-http` package to transform the incoming event request payloads to payloads compatible with Express.js. To learn more about `serverless-http`, please refer to the [serverless-http README](https://github.com/dougmoscrop/serverless-http).
-
-Additionally, it also handles provisioning of a DynamoDB database that is used for storing data about users. The Express.js application exposes two endpoints, `POST /users` and `GET /user/:userId`, which create and retrieve a user record.
-
-## Usage
-
-### Deployment
-
-Install dependencies with:
-
-```
+1. Clone the repository
+2. Install dependencies:
+```bash
 npm install
+# or
+yarn install
 ```
 
-and then deploy with:
+## User Object Format
 
-```
-serverless deploy
-```
+A user object has the following structure:
 
-After running deploy, you should see output similar to:
-
-```
-Deploying "aws-node-express-dynamodb-api" to stage "dev" (us-east-1)
-
-✔ Service deployed to stack aws-node-express-dynamodb-api-dev (109s)
-
-endpoint: ANY - https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com
-functions:
-  api: aws-node-express-dynamodb-api-dev-api (3.8 MB)
+```typescript
+{
+  id: string;          // UUID format
+  firstName: string;   // Non-empty string
+  lastName: string;    // Non-empty string
+  emails: string[];    // Array of 1-3 unique valid email addresses
+  dob: string;        // ISO date format (YYYY-MM-DD)
+}
 ```
 
-_Note_: In current form, after deployment, your API is public and can be invoked by anyone. For production deployments, you might want to configure an authorizer. For details on how to do that, refer to [`httpApi` event docs](https://www.serverless.com/framework/docs/providers/aws/events/http-api/). Additionally, in current configuration, the DynamoDB table will be removed when running `serverless remove`. To retain the DynamoDB table even after removal of the stack, add `DeletionPolicy: Retain` to its resource definition.
+### Validation Rules
+- `id` must be a valid UUID
+- `firstName` and `lastName` cannot be empty strings
+- `emails` array must contain between 1 and 3 unique email addresses
+- Email addresses must be in valid format
+- `dob` must be in YYYY-MM-DD format
+- No additional fields are allowed in the object
 
-### Invocation
+## API Endpoints
 
-After successful deployment, you can create a new user by calling the corresponding endpoint:
+### GET /users/{id}
+Retrieves a user by ID.
 
-```
-curl --request POST 'https://xxxxxx.execute-api.us-east-1.amazonaws.com/users' --header 'Content-Type: application/json' --data-raw '{"name": "John", "userId": "someUserId"}'
-```
-
-Which should result in the following response:
-
+#### Success Response (200)
 ```json
-{ "userId": "someUserId", "name": "John" }
+{
+  "status": "success",
+  "data": {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "firstName": "John",
+    "lastName": "Doe",
+    "emails": ["john.doe@example.com"],
+    "dob": "1990-01-01"
+  }
+}
 ```
 
-You can later retrieve the user by `userId` by calling the following endpoint:
-
-```
-curl https://xxxxxxx.execute-api.us-east-1.amazonaws.com/users/someUserId
-```
-
-Which should result in the following response:
-
+#### Error Response (404)
 ```json
-{ "userId": "someUserId", "name": "John" }
+{
+  "status": "error",
+  "message": "User not found"
+}
 ```
 
-### Local development
+### POST /users
+Creates a new user.
 
-The easiest way to develop and test your function is to use the `dev` command:
-
+#### Request Body
+```json
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "emails": ["john.doe@example.com"],
+  "dob": "1990-01-01"
+}
 ```
-serverless dev
+
+#### Success Response (201)
+```json
+{
+  "status": "success",
+  "data": {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "firstName": "John",
+    "lastName": "Doe",
+    "emails": ["john.doe@example.com"],
+    "dob": "1990-01-01"
+  }
+}
 ```
 
-This will start a local emulator of AWS Lambda and tunnel your requests to and from AWS Lambda, allowing you to interact with your function as if it were running in the cloud.
+#### Error Response (400)
+Example of the error response for an invalid email address:
+```json
+{
+  "status": "error",
+  "message": "Invalid payload",
+  "errors": [
+    {
+      "validation": "email",
+      "code": "invalid_string",
+      "message": "Invalid email format",
+      "path": ["emails",0]
+    }
+  ]
+}
+```
 
-Now you can invoke the function as before, but this time the function will be executed locally. Now you can develop your function locally, invoke it, and see the results immediately without having to re-deploy.
+Example of the error response for a missing field:
+```json
+{
+  "status": "error",
+  "message": "Invalid payload",
+  "errors": [
+    {
+      "code": "invalid_type",
+      "expected": "string",
+      "received": "undefined",
+      "path": [
+          "firstName"
+      ],
+      "message": "First name is required"
+    }
+  ]
+}
+```
 
-When you are done developing, don't forget to run `serverless deploy` to deploy the function to the cloud.
+### PUT /users/{id}
+Updates an existing user.
+
+#### Email Address updates:
+Email addresses can only be added, not removed or updated.
+A user can have between 1 and 3 email addresses.
+
+#### Request Body
+```json
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "emails": ["john.doe@example.com", "john.d@company.com"],
+  "dob": "1990-01-01"
+}
+```
+
+#### Success Response (200)
+```json
+{
+  "status": "success",
+  "data": {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "firstName": "John",
+    "lastName": "Doe",
+    "emails": ["john.doe@example.com", "john.d@company.com"],
+    "dob": "1990-01-01"
+  }
+}
+```
+
+
+#### Error Responses
+- 400: Invalid payload
+Example of the error response for a missing field:
+```json
+{
+  "status": "error",
+  "message": "Invalid payload",
+  "errors": [
+    {
+      "code": "invalid_type",
+      "expected": "string",
+      "received": "undefined",
+      "path": [
+          "firstName"
+      ],
+      "message": "First name is required"
+    }
+  ]
+}
+```
+
+Example of an error response when attempting to removing an email address:
+```json
+{
+  "status": "error",
+  "message": "Deleting an email is not allowed"
+}
+```
+- 404: User not found
+```json
+{
+  "status": "error",
+  "message": "User not found"
+}
+```
+
+### DELETE /users/{id}
+Deletes a user.
+
+#### Success Response (204)
+No content in the response body.
+
+## Running Tests
+
+The project uses Jest for testing. To run the tests:
+
+```bash
+# Run tests
+yarn test
+```
+
+## Deployment
+
+### Prerequisites
+1. AWS Account
+2. AWS CLI installed and configured
+
+### Deploy to AWS
+
+1. Configure AWS credentials:
+```bash
+aws configure
+```
+
+2. Deploy to a specific stage:
+```bash
+# Deploy to dev environment
+yarn run deploy -- --stage dev
+
+# Or deploy to production
+yarn run deploy -- --stage prod
+```
+
+The deployment will create:
+- API Gateway endpoints
+- Lambda functions
+- DynamoDB table
+- Required IAM roles and policies
+
+After successful deployment, the Serverless Framework will output the API endpoint URLs.
+
+### Local Development
+
+To run the service locally:
+```bash
+npm run dev
+```
+
+This will start a local server that simulates the AWS Lambda environment.
+
+## Environment Variables
+
+- `USERS_TABLE`: DynamoDB table name (automatically set during deployment)
+
+
