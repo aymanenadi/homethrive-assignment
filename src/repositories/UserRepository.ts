@@ -56,19 +56,19 @@ export class UserRepository {
 
   async update(user: User) {
     try {
-      const result = await this.docClient.send(
+      await this.docClient.send(
         new PutCommand({
           TableName: USERS_TABLE,
           Item: user,
           // Only update if the user already exists
           ConditionExpression: 'attribute_exists(id)',
-          ReturnValues: 'ALL_NEW',
         })
       );
-      return result.Attributes as User;
     } catch (error) {
       if (error instanceof ConditionalCheckFailedException) {
-        throw new UserNotFoundError();
+        throw new UserNotFoundError(
+          `A user with ID "${user.id}" was not found`
+        );
       }
       throw error;
     }

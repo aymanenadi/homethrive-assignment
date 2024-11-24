@@ -124,8 +124,7 @@ describe('UserRepository', () => {
           Attributes: updatedUser,
         });
 
-      const result = await userRepository.update(updatedUser);
-      expect(result).toEqual(updatedUser);
+      await expect(userRepository.update(user)).resolves.not.toThrow();
     });
 
     it('should throw UserNotFoundError if user does not exist', async () => {

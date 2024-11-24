@@ -57,8 +57,8 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { userRepository } = req.context;
     const user = req.body;
-    const updatedUser = await userRepository.update(user);
-    return sendSuccessResponse({ res, data: updatedUser, statusCode: 200 });
+    await userRepository.update(user);
+    return sendSuccessResponse({ res, data: user, statusCode: 200 });
   } catch (error) {
     next(error);
   }

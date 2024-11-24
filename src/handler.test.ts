@@ -358,7 +358,6 @@ describe('user-service handler', () => {
         firstName: 'Jane - Updated',
         lastName: 'Doe - Updated',
       };
-      userRepositoryUpdateSpy.mockResolvedValue(updatedUser);
 
       const response = await request(app)
         .put(`/users/${mockUser.id}`)

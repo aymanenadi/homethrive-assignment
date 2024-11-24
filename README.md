@@ -223,10 +223,10 @@ aws configure
 2. Deploy to a specific stage:
 ```bash
 # Deploy to dev environment
-yarn run deploy -- --stage dev
+yarn run deploy --stage dev
 
 # Or deploy to production
-yarn run deploy -- --stage prod
+yarn run deploy --stage prod
 ```
 
 The deployment will create:
@@ -241,7 +241,7 @@ After successful deployment, the Serverless Framework will output the API endpoi
 
 To run the service locally:
 ```bash
-npm run dev
+yarn run dev
 ```
 
 This will start a local server that simulates the AWS Lambda environment.
