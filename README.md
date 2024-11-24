@@ -181,7 +181,7 @@ Example of an error response when attempting to removing an email address:
 ```json
 {
   "status": "error",
-  "message": "Deleting an email is not allowed"
+  "message": "Deleting an email address is not allowed"
 }
 ```
 - 404: User not found

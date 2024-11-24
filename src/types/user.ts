@@ -15,8 +15,8 @@ export const UserSchema = z
       .array(z.string().email('Invalid email format'), {
         message: 'The emails field is required',
       })
-      .min(1, 'A user must have at least 1 email')
-      .max(3, 'A user can have at most 3 emails')
+      .min(1, 'A user must have at least 1 email address')
+      .max(3, 'A user can have at most 3 email addresses')
       .refine((emails) => new Set(emails).size === emails.length, {
         message: 'All the emails must be unique',
       }),

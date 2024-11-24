@@ -99,7 +99,6 @@ describe('user-service handler', () => {
         })
         .set('Accept', 'application/json');
       expect(response.status).toBe(400);
-      console.log({ body: response.body });
       expect(response.body).toEqual({
         status: 'error',
         message: 'Invalid payload',
@@ -124,7 +123,7 @@ describe('user-service handler', () => {
         message: 'Invalid payload',
         errors: [
           expect.objectContaining({
-            message: 'A user must have at least 1 email',
+            message: 'A user must have at least 1 email address',
             path: ['emails'],
           }),
         ],
@@ -238,7 +237,7 @@ describe('user-service handler', () => {
         message: 'Invalid payload',
         errors: [
           expect.objectContaining({
-            message: 'A user must have at least 1 email',
+            message: 'A user must have at least 1 email address',
             path: ['emails'],
           }),
         ],
@@ -265,7 +264,7 @@ describe('user-service handler', () => {
         message: 'Invalid payload',
         errors: [
           expect.objectContaining({
-            message: 'A user can have at most 3 emails',
+            message: 'A user can have at most 3 email addresses',
             path: ['emails'],
           }),
         ],
@@ -508,7 +507,7 @@ describe('user-service handler', () => {
         message: 'Invalid payload',
         errors: [
           expect.objectContaining({
-            message: 'A user must have at least 1 email',
+            message: 'A user must have at least 1 email address',
             path: ['emails'],
           }),
         ],
@@ -535,7 +534,7 @@ describe('user-service handler', () => {
         message: 'Invalid payload',
         errors: [
           expect.objectContaining({
-            message: 'A user can have at most 3 emails',
+            message: 'A user can have at most 3 email addresses',
             path: ['emails'],
           }),
         ],
@@ -551,7 +550,6 @@ describe('user-service handler', () => {
         })
         .set('Accept', 'application/json');
       expect(response.status).toBe(400);
-      console.log({ body: response.body });
       expect(response.body).toEqual({
         status: 'error',
         message: 'Invalid payload',
@@ -576,7 +574,7 @@ describe('user-service handler', () => {
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
         status: 'error',
-        message: 'Deleting an email is not allowed',
+        message: 'Deleting an email address is not allowed',
       });
     });
 

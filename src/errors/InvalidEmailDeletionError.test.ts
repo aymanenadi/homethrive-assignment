@@ -9,7 +9,7 @@ describe('EmailDeletionError', () => {
 
   it('should have a default message if none is provided', () => {
     const error = new InvalidEmailDeletionError();
-    expect(error.message).toBe('Deleting an email is not allowed');
+    expect(error.message).toBe('Deleting an email address is not allowed');
   });
 
   it('should set the correct name', () => {
