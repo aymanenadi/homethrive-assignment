@@ -90,7 +90,7 @@ describe('user-service handler', () => {
       });
     });
 
-    it('should omit additional keys', async () => {
+    it('should return 400 if the payload has additional fields', async () => {
       const response = await request(app)
         .post('/users')
         .send({
@@ -98,10 +98,17 @@ describe('user-service handler', () => {
           additionalKey: 'additionalValue',
         })
         .set('Accept', 'application/json');
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(400);
+      console.log({ body: response.body });
       expect(response.body).toEqual({
-        status: 'success',
-        data: mockUser,
+        status: 'error',
+        message: 'Invalid payload',
+        errors: [
+          expect.objectContaining({
+            message: "Unrecognized key(s) in object: 'additionalKey'",
+            keys: ['additionalKey'],
+          }),
+        ],
       });
     });
 
@@ -531,6 +538,28 @@ describe('user-service handler', () => {
           expect.objectContaining({
             message: 'A user can have at most 3 emails',
             path: ['emails'],
+          }),
+        ],
+      });
+    });
+
+    it('should return 400 if the payload has additional fields', async () => {
+      const response = await request(app)
+        .put(`/users/${mockUser.id}`)
+        .send({
+          ...mockUser,
+          additionalKey: 'additionalValue',
+        })
+        .set('Accept', 'application/json');
+      expect(response.status).toBe(400);
+      console.log({ body: response.body });
+      expect(response.body).toEqual({
+        status: 'error',
+        message: 'Invalid payload',
+        errors: [
+          expect.objectContaining({
+            message: "Unrecognized key(s) in object: 'additionalKey'",
+            keys: ['additionalKey'],
           }),
         ],
       });

@@ -27,6 +27,7 @@ export const UserSchema = z
       })
       .date('dob must be in the format YYYY-MM-DD'),
   })
-  .required();
+  .required()
+  .strict();
 
 export type User = z.infer<typeof UserSchema>;
