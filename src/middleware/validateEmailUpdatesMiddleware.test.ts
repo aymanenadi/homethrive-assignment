@@ -3,6 +3,7 @@ import { validateEmailUpdatesMiddleware } from './validateEmailUpdatesMiddleware
 import { createRequest, createResponse, MockResponse } from 'node-mocks-http';
 import { InvalidEmailDeletionError } from '../errors/InvalidEmailDeletionError';
 import { toMockUser } from '../test-utils/mocks/user';
+import { UserNotFoundError } from '../errors/UserNotFoundError';
 
 const fetchedUser = toMockUser();
 
@@ -48,5 +49,13 @@ describe('validateEmailUpdatesMiddleware', () => {
 
     await validateEmailUpdatesMiddleware(req, res, next);
     expect(next).toHaveBeenCalledWith(expect.any(InvalidEmailDeletionError));
+  });
+
+  it('should return an error if the user cannot be found', async () => {
+    req.context.fetchedUser = undefined;
+    const next = jest.fn() as NextFunction;
+
+    await validateEmailUpdatesMiddleware(req, res, next);
+    expect(next).toHaveBeenCalledWith(new UserNotFoundError());
   });
 });

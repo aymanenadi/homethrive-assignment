@@ -9,6 +9,7 @@ import { sendSuccessResponse } from './utils/httpResponses';
 import { errorHandlerMiddleware } from './middleware/errorHandlerMiddleware';
 import { validatePayloadMiddleware } from './middleware/validatePayloadMiddleware';
 import { RouteNotFoundError } from './errors/RouteNotFoundError';
+import { InvalidPayloadError } from './errors/InvalidPayloadError';
 
 const express = require('express');
 
@@ -57,6 +58,13 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { userRepository } = req.context;
     const user = req.body;
+    if (user.id !== req.params.id) {
+      return next(
+        new InvalidPayloadError({
+          message: 'User ID in payload does not match ID in URL',
+        })
+      );
+    }
     await userRepository.update(user);
     return sendSuccessResponse({ res, data: user, statusCode: 200 });
   } catch (error) {

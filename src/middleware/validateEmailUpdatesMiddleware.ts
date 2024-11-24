@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { InvalidEmailDeletionError } from '../errors/InvalidEmailDeletionError';
+import { UserNotFoundError } from '../errors/UserNotFoundError';
 
 /**
  * Validates the following business requirements before updating a user
@@ -17,18 +18,19 @@ export const validateEmailUpdatesMiddleware = (
 ) => {
   try {
     const fetchedUser = req.context.fetchedUser;
+    if (!fetchedUser) {
+      throw new UserNotFoundError();
+    }
 
     // Check if the user is trying to remove an email
-    if (req.body?.emails && fetchedUser) {
-      const newEmailsSet = new Set(req.body.emails);
+    const newEmailsSet = new Set(req.body.emails);
 
-      const allExistingEmailsArePresent = fetchedUser.emails.every((email) => {
-        return newEmailsSet.has(email);
-      });
+    const allExistingEmailsArePresent = fetchedUser.emails.every((email) => {
+      return newEmailsSet.has(email);
+    });
 
-      if (!allExistingEmailsArePresent) {
-        throw new InvalidEmailDeletionError();
-      }
+    if (!allExistingEmailsArePresent) {
+      throw new InvalidEmailDeletionError();
     }
 
     // Proceed to the next middleware or route handler

@@ -1,5 +1,6 @@
 import request from 'supertest';
 import { app } from './handler';
+import { v4 as uuid } from 'uuid';
 import { UserRepository } from './repositories/UserRepository';
 import { toMockUser } from './test-utils/mocks/user';
 
@@ -397,6 +398,17 @@ describe('user-service handler', () => {
             message: 'Invalid email format',
           }),
         ],
+      });
+    });
+
+    it('should return 400 if the user ID in the payload does not match the URL', async () => {
+      const response = await request(app)
+        .put(`/users/${mockUser.id}`)
+        .send({ ...mockUser, id: uuid() });
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        status: 'error',
+        message: 'User ID in payload does not match ID in URL',
       });
     });
 

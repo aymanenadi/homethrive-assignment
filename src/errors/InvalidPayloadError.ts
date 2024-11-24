@@ -5,12 +5,13 @@ import { ZodIssue } from 'zod';
  */
 export class InvalidPayloadError extends Error {
   statusCode: number;
-  errors: ZodIssue[];
+  errors: ZodIssue[] | undefined;
+
   constructor({
     errors,
     message = 'Invalid payload',
   }: {
-    errors: ZodIssue[];
+    errors?: ZodIssue[];
     message?: string;
   }) {
     super(message);
