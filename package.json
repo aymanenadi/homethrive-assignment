@@ -8,7 +8,8 @@
   "scripts": {
     "test": "jest --coverage",
     "deploy": "sls deploy",
-    "dev": "sls dev"
+    "dev": "sls dev",
+    "remove": "sls remove"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.585.0",

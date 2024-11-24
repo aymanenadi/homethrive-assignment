@@ -246,6 +246,11 @@ yarn run dev
 
 This will start a local server that simulates the AWS Lambda environment.
 
+### Remove Deployment
+```bash
+yarn run remove --stage dev
+```
+
 ## Environment Variables
 
 - `USERS_TABLE`: DynamoDB table name (automatically set during deployment)
